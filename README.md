@@ -16,7 +16,7 @@
 ## 🛠️ **Tech Stack**  
 - **Frontend**: Next.js 14 (App Router), TypeScript, Tailwind CSS  
 - **Backend**: Next.js API Routes, Firebase (Auth + Firestore)  
-- **AI**: Gemini Pro, Google Calendar/Gmail APIs  
+- **AI**: Gemini free, Google Calendar/Gmail APIs  
 - **Database**: MongoDB Atlas (NoSQL)  
 - **Deployment**: Vercel (Frontend + Serverless), Firebase Hosting  
 - **Animations**: Framer Motion  
