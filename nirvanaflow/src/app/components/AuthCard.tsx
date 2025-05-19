@@ -2,7 +2,7 @@
 
 
 import { motion } from 'framer-motion';
-import SignUpButton from './SignUpbutton';
+import SignUpButton from './SignUpButton';
 
 export default function AuthCard() {
   return (
