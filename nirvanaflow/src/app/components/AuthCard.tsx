@@ -3,6 +3,7 @@
 
 import { motion } from 'framer-motion';
 import SignUpButton from './SignUpButton';
+import AuthContextProvider from '@/lib/context/AuthContext';
 
 export default function AuthCard() {
   return (
@@ -19,7 +20,9 @@ export default function AuthCard() {
         </p>
       </div>
 
-      <SignUpButton />
+      <AuthContextProvider>
+        <SignUpButton />
+      </AuthContextProvider>
 
 
 
