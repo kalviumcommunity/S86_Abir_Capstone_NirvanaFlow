@@ -2,7 +2,7 @@
 
 
 import { motion } from 'framer-motion';
-import SignUpButton from './SignUpButton';
+import SignUpButton from './SignUpbutton';
 import AuthContextProvider from '@/lib/context/AuthContext';
 
 export default function AuthCard() {
