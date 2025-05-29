@@ -10,8 +10,6 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { auth } from "../firebase";
 import axios from "axios";
 
-
-
 type AuthContextType = {
   user: User | null;
   loading: boolean;
@@ -19,8 +17,6 @@ type AuthContextType = {
   handleSignIn: () => Promise<void>;
   handleLogOut: () => Promise<void>;
 };
-
-
 
 const defaultValue: AuthContextType = {
   user: null,
@@ -42,10 +38,16 @@ export default function AuthContextProvider({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       setLoading(false);
+
+      if (user) {
+        const token = await user.getIdToken(true);
+        document.cookie = `firebaseToken=${token}; path=/;`;
+      }
     });
+
     return () => unsubscribe();
   }, []);
 
@@ -60,10 +62,6 @@ export default function AuthContextProvider({
         name: signedInUser.displayName,
         email: signedInUser.email,
       });
-      
-      
-
-
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
