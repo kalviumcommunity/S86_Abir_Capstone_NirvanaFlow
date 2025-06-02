@@ -3,17 +3,19 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 
+
 export interface ISubtask extends Document {
-  eventId: string;
+  eventId: mongoose.Types.ObjectId;
+  userId:string;
   title: string;
-   priority: 'low' | 'medium' | 'high';
   status: 'todo' | 'doing' | 'done';
+  priority: 'low' | 'medium' | 'high';
   createdAt: Date;
 }
 
 
 const SubtaskSchema: Schema = new Schema({
-  eventId: { type: mongoose.Types.ObjectId, ref: 'Event' },
+  eventId: { type: mongoose.Types.ObjectId, ref: 'Events' },
   userId: { type: String, ref: 'User', required: true },
   title: { type: String, required: true },
   status: { type: String, enum: ['todo', 'doing', 'done'], default: 'todo' },
