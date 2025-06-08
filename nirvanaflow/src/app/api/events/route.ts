@@ -38,7 +38,7 @@ export async function POST(req:NextRequest) {
                 { status: 400 }
             );
         }
-        console.log(userId)
+        // console.log(userId)
 
         const newEvent=await Events.create({
             userId:userId,
