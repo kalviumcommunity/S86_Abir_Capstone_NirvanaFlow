@@ -11,7 +11,7 @@ interface GeneratedSubtask {
 }
 
 
-export async function Post(req:NextRequest) {
+export async function POST(req:NextRequest) {
     try{
         connectDb();
         const userId=await verifyUserFromFirebase()

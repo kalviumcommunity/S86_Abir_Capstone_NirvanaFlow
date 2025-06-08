@@ -4,7 +4,7 @@ import User from "@/models/Users";
 import connectDb from "@/lib/db";
 import { verifyFirebaseToken } from "@/lib/firebaseAdmin";
 
-export async function Get(req: NextRequest) {
+export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const code = searchParams.get("code");
   const firebaseToken = req.cookies.get("firebaseToken")?.value;

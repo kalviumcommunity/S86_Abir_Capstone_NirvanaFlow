@@ -10,7 +10,7 @@ interface GeneratedSubtask {
     priority: 'low' | 'medium' | 'high';
 }
 
-export async function Get(){
+export async function GET(){
     try{
         const userId= await verifyUserFromFirebase()
         await connectDb()
@@ -25,7 +25,7 @@ export async function Get(){
 }
 
 
-export async function Post(req:NextRequest) {
+export async function POST(req:NextRequest) {
     try{
         const body=await req.json()
         const userId = await  verifyUserFromFirebase()
@@ -38,6 +38,7 @@ export async function Post(req:NextRequest) {
                 { status: 400 }
             );
         }
+        console.log(userId)
 
         const newEvent=await Events.create({
             userId:userId,
