@@ -28,4 +28,4 @@ const EventSchema = new mongoose.Schema({
 
 EventSchema.index({ userId: 1 });
 EventSchema.index({ deadline: 1 });
-export default mongoose.models.Event || mongoose.model('Event', EventSchema);
+export default mongoose.models.Events || mongoose.model('Events', EventSchema);
