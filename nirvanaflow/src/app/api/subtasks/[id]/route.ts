@@ -50,12 +50,26 @@ export async function PUT(
     );
   }
 }
-export async function DELETE({ params }: { params: { id: string } }) {
+
+export async function DELETE(
+  req: NextRequest, 
+  context: { params: { id: string } }
+) {
   try {
-    const { id } = params;
+    const { id } = context.params;
+
+    if (!id) {
+      return NextResponse.json(
+        { message: "Missing subtask ID" },
+        { status: 400 }
+      );
+    }
+    
+    console.log('delete called for', id);
     await connectDb();
 
     const deletedSubtask = await Subtask.findByIdAndDelete(id);
+    
     if (!deletedSubtask) {
       return NextResponse.json(
         { message: "Subtask not found" },
@@ -68,7 +82,7 @@ export async function DELETE({ params }: { params: { id: string } }) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error fetching the Subtasks for This Event", error);
+    console.error("Error deleting the subtask:", error);
     return NextResponse.json(
       { message: "Error removing the subtask" },
       { status: 500 }

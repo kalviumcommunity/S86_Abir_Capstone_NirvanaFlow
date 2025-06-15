@@ -8,29 +8,40 @@ import { motion } from "motion/react";
 export type Task = {
   _id: string;
   title: string;
-  priority: "high" | "medium" | "low"; // Make this more type-safe
+  priority: "high" | "medium" | "low";
 };
 
-async function handleDelete(id: string) {
+type TaskcardProps = {
+  task: Task;
+  onTaskDeleted?: (id: string) => void; 
+};
+
+async function handleDelete(id: string, onTaskDeleted?: (id: string) => void) {
   try {
+    console.log('delete triggered for ',id)
     const res = await axios.delete(`/api/subtasks/${id}`);
-    if (res.status != 200) {
+    if (res.status !== 200) {
       throw new Error("Delete failed");
     }
     
-    toast.success("item deleted successfully");
+    toast.success("Item deleted successfully");
+    
+    
+    if (onTaskDeleted) {
+      onTaskDeleted(id);
+    }
   } catch (error) {
     toast.error("Something went wrong while deleting.");
     console.log(error);
   }
 }
 
-export default function Taskcard({ task }: { task: Task }) {
+export default function Taskcard({ task, onTaskDeleted }: TaskcardProps) {
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: task._id,
   });
   
-  // Use complete class names instead of dynamic construction
+  
   const priorityStyles = {
     high: {
       textColor: "text-red-300/80",
@@ -54,17 +65,26 @@ export default function Taskcard({ task }: { task: Task }) {
       exit={{ opacity: 0, scale: 0.9 }}
       transition={{ duration: 0.2 }}
       ref={setNodeRef}
-      {...attributes}
-      {...listeners}
     >
-      <Card className={`bg-zinc-900 border-none transition-transform duration-200 cursor-grab active:cursor-grabbing`}>
-        <CardContent className="p-4 text-sm text-white flex justify-between">
-          <div className="font-semibold">{task.title}</div>
-          <div className={`text-xs ${priorityStyles.textColor} mt-1 flex items-center gap-1`}>
-            <div className={`w-2 h-2 rounded-full ${priorityStyles.bgColor}`}></div>
-            {task.priority}
+      <Card className="bg-zinc-900 border-none transition-transform duration-200 cursor-grab active:cursor-grabbing">
+        <CardContent className="p-4 text-sm text-white flex justify-between items-center">
+          <div 
+            className="flex-1 flex items-center justify-between"
+            {...attributes}
+            {...listeners}
+          >
+            <div className="font-semibold">{task.title}</div>
+            <div className={`text-xs ${priorityStyles.textColor} ml-2 flex items-center gap-1`}>
+              <div className={`w-2 h-2 rounded-full ${priorityStyles.bgColor}`}></div>
+              {task.priority}
+            </div>
           </div>
-          <DeleteMenu id={task._id} onDelete={handleDelete} />
+          <div className="ml-2">
+            <DeleteMenu 
+              id={task._id} 
+              onDelete={(id) => handleDelete(id, onTaskDeleted)} 
+            />
+          </div>
         </CardContent>
       </Card>
     </motion.div>
