@@ -1,14 +1,11 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
+const genAI = new GoogleGenerativeAI(process.env.GenerativeAi_ApiKey!);
 
+export async function generateSubtasks(title: string, description: string) {
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-const genAI=new GoogleGenerativeAI(process.env.GenerativeAi_ApiKey!)
-
-
-export async function generateSubtasks(title:string,description:string){
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
-    const prompt = `
+  const prompt = `
 You are an intelligent task breakdown assistant. Given a task and description, analyze its complexity, estimated time requirement, and difficulty. Then, break it down into logical subtasks to ensure an efficient workflow.
 
 Rules:
@@ -28,15 +25,15 @@ Return the result in **JSON format**, following this structure:
 ]
 `;
 
+  const reasult = await model.generateContent(prompt);
+  const text = reasult.response.text();
 
-    const reasult=await model.generateContent(prompt)
-    const text=reasult.response.text()
-
-    try{
-        const Subtasks=JSON.parse(text)
-        return Subtasks
-    }catch(error){
-        console.log('error parsing json', error)
-        throw new Error('Failed to get the gemini response')
-    }
+  try {
+    const cleanedText = text.replace(/```json|```/g, "").trim();
+    const Subtasks = JSON.parse(cleanedText);
+    return Subtasks;
+  } catch (error) {
+    console.log("error parsing json", error);
+    throw new Error("Failed to get the gemini response");
+  }
 }

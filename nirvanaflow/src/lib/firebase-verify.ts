@@ -4,7 +4,8 @@ import { verifyFirebaseToken } from './firebaseAdmin';
 export async function verifyUserFromFirebase(): Promise<string> {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get('firebasetoken')?.value;
+    const token = cookieStore.get('firebaseToken')?.value;
+    // console.log(token)
     
     if (!token) {
       throw new Error('No Firebase token found in cookies');

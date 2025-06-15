@@ -27,7 +27,7 @@ export function DeleteMenu({ id, onDelete }: DeleteMenuProps) {
     <AlertDialog>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="p-2 hover:bg-muted rounded">
+          <button className="p-2 hover:text-muted rounded">
             <MoreVertical className="h-4 w-4" />
           </button>
         </DropdownMenuTrigger>

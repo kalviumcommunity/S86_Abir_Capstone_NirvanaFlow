@@ -1,31 +1,124 @@
-import { Button } from "@/components/ui/button"
-import SingleBoard,{Board} from "./Event_board/singleBoards"
+"use client";
 
-export default function EventArea(){
-    const boards:Board[]=[
-        {name:'Todo',tasks:[]},
-        {name:'Doing',tasks:[]},
-        {name:'Done',tasks:[]}
-    ]
+import SingleBoard, { Board } from "./Event_board/singleBoards";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { ISubtask } from "@/models/Subtask";
+import AddEventForm from "./Event_board/addEventForm";
+import { DndContext, DragEndEvent,DragOverlay  } from "@dnd-kit/core";
+import Taskcard,{Task} from './Event_board/task';
 
-    return(
-        <main className="flex-1 p-8">
-        <div className="text-3xl font-semibold mb-2">Tuesday, April 23</div>
-        <div className="text-sm text-zinc-400 mb-6">
-          {/* You have {tasks.todo.length + tasks.inProgress.length + tasks.done.length} tasks today. */}
-        </div>
-        {/* Main boards */}
+export default function EventArea() {
+  const [boards, setBoards] = useState<Board[]>([
+    { name: "Todo", tasks: [] },
+    { name: "Doing", tasks: [] },
+    { name: "Done", tasks: [] },
+  ]);
+
+  async function fetchSubtasks(id?: string) {
+    try {
+      let res;
+      if (!id) {
+        res = await axios.get("/api/subtasks");
+      } else {
+        res = await axios.get(`/api/subtasks/events/${id}`);
+      }
+
+      const subtasks = res.data;
+      console.log(res.data);
+
+      const grouped = {
+        Todo: subtasks.filter((task: ISubtask) => task.status === "todo"),
+        Doing: subtasks.filter((task: ISubtask) => task.status === "doing"),
+        Done: subtasks.filter((task: ISubtask) => task.status === "done"),
+      };
+
+      setBoards([
+        { name: "Todo", tasks: grouped.Todo },
+        { name: "Doing", tasks: grouped.Doing },
+        { name: "Done", tasks: grouped.Done },
+      ]);
+    } catch (error) {
+      console.error("Failed to fetch subtasks:", error);
+    }
+  }
+
+  async function handleDragEnd(event: DragEndEvent) {
+  const { active, over } = event;
+  if (!over) return;
+
+  const taskId = active.id;
+  const newStatusRaw = over.id;
+  if (typeof newStatusRaw !== "string") return;
+
+  const newStatus = newStatusRaw.toLowerCase();
+
+  setBoards((prevBoards) => {
+    const task = prevBoards
+      .flatMap((b) => b.tasks)
+      .find((t) => t._id === taskId);
+    if (!task) return prevBoards;
+
+    const updated = prevBoards.map((board) => {
+      const filtered = board.tasks.filter((t) => t._id !== taskId);
+
+      return {
+        ...board,
+        tasks:
+          board.name.toLowerCase() === newStatus
+            ? [...filtered, { ...task, status: newStatus }]
+            : filtered,
+      };
+    });
+
+    return updated;
+  });
+
+  try {
+    await axios.put(`/api/subtasks/${taskId}`, {
+      status: newStatus,
+    });
+  } catch (error) {
+    console.error("Failed to update subtask:", error);
+  }
+}
+
+const [activeTask, setActiveTask] = useState<Task | null>(null);
+
+  useEffect(() => {
+    fetchSubtasks();
+  }, []);
+
+  return (
+    <main className="flex-1 p-8">
+      <div className="text-3xl font-semibold mb-2">Tuesday, April 23</div>
+      <div className="text-sm text-zinc-400 mb-6">
+        {/* Total tasks: {boards.reduce((sum, b) => sum + b.tasks.length, 0)} */}
+      </div>
+
+      <DndContext
+        onDragStart={(event) => {
+          const taskId = event.active.id;
+          const found = boards.flatMap((b) => b.tasks).find((t) => t._id === taskId);
+          setActiveTask(found || null);
+        }}
+        onDragEnd={handleDragEnd}
+        onDragCancel={() => setActiveTask(null)}
+      >
         <div className="flex gap-4">
-            {boards.map((board,i)=>(
-                <SingleBoard  board={board} key={i}/>
-            ))}
+          {boards.map((board, i) => (
+            <SingleBoard board={board} key={i} />
+          ))}
         </div>
-        
-        <div className="mt-6">
-          <Button variant="ghost" className="text-zinc-400 hover:text-white" >
-            + Add Task
-          </Button>
-        </div>
-      </main>
-    )
+
+        <DragOverlay dropAnimation={null}>
+          {activeTask ? <Taskcard task={activeTask} /> : null}
+        </DragOverlay>
+      </DndContext>
+
+      <div className="mt-6">
+        <AddEventForm onSuccess={fetchSubtasks} />
+      </div>
+    </main>
+  );
 }
