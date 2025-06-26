@@ -11,7 +11,7 @@ export default function SignUpButton() {
 
   useEffect(() => {
     if (user && !loading) {
-      router.push('/');
+      router.push('/dashboard');
     }
   }, [user, loading, router]);
 

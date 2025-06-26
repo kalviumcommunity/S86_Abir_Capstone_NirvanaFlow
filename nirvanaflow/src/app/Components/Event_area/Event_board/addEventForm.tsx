@@ -6,10 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {  Calendar, Type, FileText } from "lucide-react";
-import axios from "axios";
+import { Calendar, Type, FileText } from "lucide-react";
+import { useEventFilter } from "@/lib/context/EventFilterContext";
 
-export default function AddEventForm({ onSuccess }: { onSuccess?: () => void }) {
+export default function AddEventForm() {
+  const { addEvent } = useEventFilter();
+  
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -22,16 +24,17 @@ export default function AddEventForm({ onSuccess }: { onSuccess?: () => void }) 
     
     setIsSubmitting(true);
     try {
-      await axios.post("/api/events", {
+      await addEvent({
         title: title.trim(),
         description: description.trim(),
         deadline,
       });
+      
+      // Reset form and close dialog
       setOpen(false);
       setTitle("");
       setDescription("");
       setDeadline("");
-      onSuccess?.();
     } catch (err) {
       console.error("Error adding event", err);
     } finally {
@@ -49,12 +52,12 @@ export default function AddEventForm({ onSuccess }: { onSuccess?: () => void }) 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" className="text-zinc-400 hover:text-white">
+        <Button variant="ghost" className="text-zinc-400 hover:text-white hover:bg-zinc-800">
           + Add Event
         </Button>
       </DialogTrigger>
       
-      <DialogContent className="sm:max-w-md border-zinc-700 bg-zinc-900 shadow-2xl p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-md border-zinc-800 bg-zinc-950 shadow-2xl p-0 overflow-hidden">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -116,7 +119,7 @@ export default function AddEventForm({ onSuccess }: { onSuccess?: () => void }) 
               className="space-y-2"
             >
               <div className="flex items-center gap-2 text-zinc-400 text-sm">
-                <Calendar className="w-4 h-4" />
+                <Calendar className="w-4 h-4 " />
                 <span>Deadline</span>
               </div>
               <Input
@@ -149,7 +152,7 @@ export default function AddEventForm({ onSuccess }: { onSuccess?: () => void }) 
                 <Button 
                   type="submit" 
                   disabled={!title.trim() || isSubmitting}
-                  className="bg-white text-zinc-900 hover:bg-zinc-50 hover:text-black font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-white text-zinc-900 hover:bg-zinc-800/50 hover:text-white font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <AnimatePresence mode="wait">
                     {isSubmitting ? (
@@ -163,7 +166,7 @@ export default function AddEventForm({ onSuccess }: { onSuccess?: () => void }) 
                         <motion.div
                           animate={{ rotate: 360 }}
                           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                          className="w-4 h-4 border-2 border-zinc-400 border-t-zinc-700 rounded-full"
+                          className="w-4 h-4 border-2 border-zinc-600 border-t-zinc-800 rounded-full bg-zinc-800 text-white"
                         />
                         Creating...
                       </motion.div>

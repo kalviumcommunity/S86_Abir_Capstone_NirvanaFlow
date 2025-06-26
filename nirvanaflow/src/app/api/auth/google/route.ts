@@ -8,5 +8,5 @@ export async function GET() {
     scope: SCOPES,
   });
 
-  return NextResponse.redirect(url);
+ return NextResponse.json({ url });
 }

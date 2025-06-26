@@ -1,26 +1,27 @@
 'use client';
 
-import { motion } from "framer-motion";
+
 import { ProjectDropdown } from "../Dropdown/projectdropdown"; 
-import { PriorityEmail } from "./priorityEmail";
-import { UpcomingEvents } from "./upcomingEvents"; 
+import GoogleConnect from "./connectButton";
 import { UserProfile } from "./userProfile";
+import AuthContextProvider from '@/lib/context/AuthContext';
 
 
 
 export function Sidebar() {
   return (
-    <motion.aside
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      className="w-64 bg-zinc-950 p-6 border-l border-zinc-800 flex flex-col justify-between"
+    <aside
+      
+      className="w-64 bg-gradient-to-br to-zinc-950  via-zinc-900 to-zinc-950 p-6 border-l border-zinc-800 flex flex-col justify-between pb-5 pt-5  overflow-x-hidden "
     >
-      <div>
-        <ProjectDropdown  />
-        <PriorityEmail />
-        <UpcomingEvents />
+    
+      <div className=" flex flex-col gap-2">
+        <ProjectDropdown   />
+        <GoogleConnect />
       </div>
-      <UserProfile />
-    </motion.aside>
+      <AuthContextProvider >
+        <UserProfile />
+      </AuthContextProvider>
+    </aside>
   );
 }

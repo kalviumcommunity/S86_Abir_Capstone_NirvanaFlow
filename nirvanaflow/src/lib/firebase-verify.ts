@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { verifyFirebaseToken } from './firebaseAdmin';
 
-export async function verifyUserFromFirebase(): Promise<string> {
+export async function verifyUserFromFirebase(req: unknown): Promise<string> {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get('firebaseToken')?.value;

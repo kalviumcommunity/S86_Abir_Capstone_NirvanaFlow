@@ -10,9 +10,9 @@ interface GeneratedSubtask {
   priority: "low" | "medium" | "high";
 }
 
-export async function GET() {
+export async function GET(req:NextRequest) {
   try {
-    const userId = await verifyUserFromFirebase();
+    const userId = await verifyUserFromFirebase(req);
     await connectDb();
     const events = await Events.find({ userId });
 
@@ -29,7 +29,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const userId = await verifyUserFromFirebase();
+    const userId = await verifyUserFromFirebase(req);
     await connectDb();
     const { title, description, deadline } = body;
 
@@ -58,7 +58,10 @@ export async function POST(req: NextRequest) {
       priority: sub.priority,
     }));
 
-    await Subtask.insertMany(subDocs);
+    const inserted = await Subtask.insertMany(subDocs);
+    await Events.findByIdAndUpdate(newEvent._id, {
+      $push: { subtasks: { $each: inserted.map((s) => s._id) } },
+    });
     return NextResponse.json(newEvent, { status: 201 });
   } catch (error) {
     console.log("error creating the event", error);
