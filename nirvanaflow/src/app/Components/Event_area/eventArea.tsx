@@ -145,7 +145,7 @@ export default function EventArea() {
 
   return (
     <motion.main 
-      className="flex-1 p-6 bg-gradient-to-br from-black via-zinc-900 to-black min-h-screen"
+      className="flex-1 p-6 bg-gradient-to-bl from-black via-zinc-900 to-black min-h-screen"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}

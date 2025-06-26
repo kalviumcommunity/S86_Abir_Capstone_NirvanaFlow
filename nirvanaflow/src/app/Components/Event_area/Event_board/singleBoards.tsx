@@ -78,7 +78,7 @@ export default function SingleBoard({
   return (
     <motion.div 
       className={`
-        relative bg-zinc-900/50 backdrop-blur-sm rounded-xl border transition-all duration-300
+        relative transition-all duration-300
         ${isOver 
           ? `  shadow-lg shadow-${config.color.split('-')[1]}-500/20` 
           : 'border-zinc-800/50 hover:border-zinc-700/50'

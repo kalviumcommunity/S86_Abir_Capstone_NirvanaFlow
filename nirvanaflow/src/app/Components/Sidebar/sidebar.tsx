@@ -12,7 +12,7 @@ export function Sidebar() {
   return (
     <aside
       
-      className="w-64 bg-gradient-to-br to-zinc-950  via-zinc-900 to-zinc-950 p-6 border-l border-zinc-800 flex flex-col justify-between pb-5 pt-5  overflow-x-hidden "
+      className="w-64 bg-gradient-to-bl to-zinc-950  via-zinc-900 to-zinc-950 p-6 border-l border-zinc-800 flex flex-col justify-between pb-5 pt-5  overflow-x-hidden "
     >
     
       <div className=" flex flex-col gap-2">
