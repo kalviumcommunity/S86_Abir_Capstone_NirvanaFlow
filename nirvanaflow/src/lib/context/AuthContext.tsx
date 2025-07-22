@@ -5,6 +5,8 @@ import {
   signOut,
   User,
   GoogleAuthProvider,
+  setPersistence,
+  browserLocalPersistence,
 } from "firebase/auth";
 import { createContext, useContext, useEffect, useState } from "react";
 import { auth } from "../firebase";
@@ -38,16 +40,16 @@ export default function AuthContextProvider({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Set persistence when auth is initialized
+    setPersistence(auth, browserLocalPersistence);
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       setLoading(false);
 
-      
-
       if (user) {
-        
         const token = await user.getIdToken(true);
-        document.cookie = `firebaseToken=${token}; path=/;`;
+        document.cookie = `firebaseToken=${token}; path=/; max-age=31536000`; // Set cookie for 1 year
       }
     });
 

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent } from "@dnd-kit/core";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Clock, CheckCircle2, Circle, PlayCircle } from "lucide-react";
+import {  Clock, CheckCircle2, Circle, PlayCircle } from "lucide-react";
 import axios from "axios";
 
 import SingleBoard from "./Event_board/singleBoards";
@@ -158,7 +158,6 @@ export default function EventArea() {
         transition={{ delay: 0.1, duration: 0.5 }}
       >
         <div className="flex items-center gap-3 mb-3">
-          <Calendar className="w-8 h-8 text-zinc-400" />
           <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-zinc-300 bg-clip-text text-transparent">
             Tuesday, April 23
           </h1>

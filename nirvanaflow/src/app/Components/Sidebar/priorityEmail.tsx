@@ -40,7 +40,6 @@ export function PriorityEmail() {
       setError(null);
 
       const response = await axios.get<EmailApiResponse>("/api/sync/mail");
-
       const data = response.data;
 
       setEmailData(data.mostImportantEmail);
@@ -83,71 +82,73 @@ export function PriorityEmail() {
     if (match) {
       return match[1].replace(/"/g, "").trim();
     }
-
-    return from.length > 30 ? from.substring(0, 30) + "..." : from;
+    return from.length > 25 ? from.substring(0, 25) + "…" : from;
   };
+
+  
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 }}
-      className="mb-6 shadow-2xs"
+      transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+      className="w-full"
     >
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2 text-sm text-zinc-400">
-          <Mail size={16} />
-          <span>Priority Email</span>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Mail size={16} className="text-zinc-400" />
+          <span className="text-sm font-medium text-white">Priority Email</span>
           {totalEmails > 0 && (
-            <span className="text-xs text-zinc-500">{totalEmails} total</span>
+            <span className="text-xs text-zinc-500 bg-zinc-800/60 px-2 py-0.5 rounded-full">
+              {totalEmails}
+            </span>
           )}
         </div>
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors disabled:opacity-50"
+          className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all duration-200 disabled:opacity-40 hover:bg-white/5 px-2 py-1 rounded-lg active:scale-95"
         >
           <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} />
-          {refreshing ? "Syncing..." : "Refresh"}
+          <span className="font-medium">{refreshing ? "Syncing" : "Refresh"}</span>
         </button>
       </div>
 
-      <Card className="bg-zinc-900 border-none hover:bg-zinc-800/50 transition-colors duration-200 cursor-pointer">
-        <CardContent className="p-3">
+      <Card className="bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/8 transition-all duration-300 ease-out hover:scale-[1.01] active:scale-[0.99] cursor-pointer rounded-2xl">
+        <CardContent className="p-4">
           {loading ? (
-            <div className="flex items-center justify-center py-4">
-              <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
-              <span className="ml-2 text-sm text-zinc-400">
-                Loading priority email...
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
+              <span className="ml-3 text-sm text-zinc-400 font-medium">
+                Loading...
               </span>
             </div>
           ) : error ? (
-            <div className="text-sm text-red-400 flex items-center gap-2">
+            <div className="text-sm text-red-400 flex items-center gap-2 py-2">
               <AlertCircle size={16} />
-              <span>{error}</span>
+              <span className="font-medium">{error}</span>
             </div>
           ) : !emailData ? (
-            <div className="text-sm text-zinc-400 text-center py-2">
-              No priority emails found
+            <div className="text-sm text-zinc-500 text-center py-4 font-medium">
+              No priority emails
             </div>
           ) : (
-            <div
-              className="relative pl-2 border-l-4"
-              style={{
-                borderColor:
-                  emailData.importanceScore >= 50
-                    ? "#f87171"
-                    : emailData.importanceScore >= 30
-                    ? "#fb923c"
-                    : "transparent",
-              }}
+            <div 
+              className="relative pl-3  rounded-sm"
             >
-              <div className="text-white text-sm font-medium leading-snug">
+              <h4 className="text-white text-sm font-semibold leading-tight line-clamp-2">
                 {emailData.subject}
-              </div>
-              <div className="text-zinc-400 text-xs mt-0.5">
-                From: {formatSender(emailData.from)}
-              </div>
+              </h4>
+              <p className="text-zinc-400 text-xs mt-1 font-medium">
+                {formatSender(emailData.from)}
+              </p>
+              {emailData.isUnread && (
+                <div className="inline-flex mt-2">
+                  <span className="text-xs text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full font-medium border border-blue-500/20">
+                    Unread
+                  </span>
+                </div>
+              )}
             </div>
           )}
         </CardContent>

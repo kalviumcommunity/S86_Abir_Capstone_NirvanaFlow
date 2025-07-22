@@ -1,10 +1,17 @@
-
+'use client';
+import LandingPage from "./Components/landingPage";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const router = useRouter();
+
   return (
-    <div className="font-bold text-2xl">
-      hello
-      
-      </div>
+    <>
+      <LandingPage 
+        onGetStarted={() => {
+          router.push('/auth');
+        }} 
+      />
+    </>
   );
 }
