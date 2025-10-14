@@ -6,6 +6,7 @@ export interface IUser extends Document {
   uid:string;
   googleAccessToken:string;
   googleRefreshToken:string;
+  googleTokenExpiry: Date;
   createdAt: Date;
 }
 
@@ -15,6 +16,7 @@ const UserSchema: Schema = new Schema({
   uid: { type: String, required: true, unique: true },
   googleAccessToken: { type: String }, 
   googleRefreshToken: { type: String },
+  googleTokenExpiry: { type: Date },
   createdAt: { type: Date, default: Date.now },
 });
 

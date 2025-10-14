@@ -10,7 +10,8 @@ export interface IEvent extends Document {
   subtasks:ISubtask[];
   createdFromGoogle:boolean;
   googleEventId:string;
-  createdAt:Date
+  createdAt:Date,
+  completedAt:Date
 }
 
 
@@ -23,6 +24,7 @@ const EventSchema = new mongoose.Schema({
   createdFromGoogle: { type: Boolean, default: false }, 
   googleEventId: { type: String }, 
   createdAt: { type: Date, default: Date.now },
+  completedAt: { type: Date, default: null },
 });
 
 

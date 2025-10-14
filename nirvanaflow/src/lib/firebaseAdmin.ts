@@ -21,7 +21,6 @@ if (!admin.apps.length) {
   }
 }
 
-// Debug: Log environment variables (be careful in production!)
 console.log('Environment variables check:');
 console.log('Project ID:', process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
 console.log('Client Email:', process.env.FIREBASE_CLIENT_EMAIL);
