@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent } from "@dnd-kit/core";
 import { motion, AnimatePresence } from "framer-motion";
-import {  Clock, CheckCircle2, Circle, PlayCircle } from "lucide-react";
+import { Clock, CheckCircle2, Circle, PlayCircle, AlertTriangle, X, Calendar } from "lucide-react";
 import axios from "axios";
 
 import SingleBoard from "./Event_board/singleBoards";
@@ -11,6 +11,20 @@ import TaskCard from "./Event_board/task";
 import AddEventForm from "./Event_board/addEventForm";
 import { Task, Board } from "@/types";
 import { useEventFilter } from "@/lib/context/EventFilterContext";
+
+interface OverdueEvent {
+  _id: string;
+  title: string;
+  deadline: string;
+  priority: string;
+  description?: string;
+}
+
+interface DeadlineNotification {
+  id: string;
+  event: OverdueEvent;
+  timestamp: string;
+}
 
 export default function EventArea() {
   const { selectedEventId, refreshTrigger } = useEventFilter();
@@ -22,6 +36,8 @@ export default function EventArea() {
   ]);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [notifications, setNotifications] = useState<DeadlineNotification[]>([]);
+  const [isExtending, setIsExtending] = useState<string | null>(null);
 
   async function fetchSubtasks(id?: string) {
     setIsLoading(true);
@@ -83,10 +99,16 @@ export default function EventArea() {
     });
 
     try {
-      await axios.put(`/api/subtasks/${taskId}`, { status: newStatus });
+      console.log("Updating subtask:", { taskId, newStatus }); // Debug log
+      const response = await axios.put(`/api/subtasks/${taskId}`, { status: newStatus });
+      console.log("Update successful:", response.data);
     } catch (error) {
       console.error("Failed to update subtask:", error);
-      // Revert on error
+      if (axios.isAxiosError(error)) {
+        console.error("Response data:", error.response?.data);
+        console.error("Status code:", error.response?.status);
+      }
+      // Revert optimistic update on error
       fetchSubtasks(selectedEventId);
     }
   }
@@ -111,12 +133,95 @@ export default function EventArea() {
     );
   };
 
+  const handleExtendDeadline = async (eventId: string) => {
+    setIsExtending(eventId);
+    try {
+      // Calculate new deadline (24 hours from now)
+      const newDeadline = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      
+      await axios.put(`/api/events/${eventId}/extend`, {
+        deadline: newDeadline
+      });
+
+      // Remove notification
+      setNotifications(prev => prev.filter(notif => notif.event._id !== eventId));
+      
+    } catch (error) {
+      console.error("Failed to extend deadline:", error);
+    } finally {
+      setIsExtending(null);
+    }
+  };
+
+  const handleMarkComplete = async (eventId: string) => {
+    try {
+      await axios.put(`/api/events/${eventId}`, {
+        completedAt: new Date()
+      });
+
+      // Remove notification
+      setNotifications(prev => prev.filter(notif => notif.event._id !== eventId));
+      
+    } catch (error) {
+      console.error("Failed to mark event complete:", error);
+    }
+  };
+
+  const dismissNotification = (eventId: string) => {
+    setNotifications(prev => prev.filter(notif => notif.event._id !== eventId));
+  };
+
+  // SSE Integration
+  useEffect(() => {
+    const evtSource = new EventSource("/api/sse");
+    
+    evtSource.onmessage = (event) => {
+      console.log("SSE raw event:", event);
+    };
+
+    evtSource.addEventListener('deadline-missed', (event) => {
+      const data = JSON.parse(event.data);
+      console.log("Deadline missed:", data);
+      
+      if (data.events && data.events.length > 0) {
+        const newNotifications = data.events.map((overdueEvent: OverdueEvent) => ({
+          id: `${overdueEvent._id}-${Date.now()}`,
+          event: overdueEvent,
+          timestamp: new Date().toISOString()
+        }));
+        
+        setNotifications(prev => {
+          // Avoid duplicates
+          const existingIds = new Set(prev.map(n => n.event._id));
+          const uniqueNotifications = newNotifications.filter(n => !existingIds.has(n.event._id));
+          return [...prev, ...uniqueNotifications];
+        });
+      }
+    });
+
+    evtSource.addEventListener('connected', (event) => {
+      console.log("SSE connected:", event.data);
+    });
+
+    evtSource.addEventListener('error', (event) => {
+      console.error("SSE error event:", event);
+    });
+
+    evtSource.onerror = (err) => {
+      console.error("SSE connection error:", err);
+    };
+
+    return () => {
+      evtSource.close();
+    };
+  }, []);
+
   // Fetch subtasks when selectedEventId changes
   useEffect(() => {
     fetchSubtasks(selectedEventId);
   }, [selectedEventId]);
 
-  // Refresh subtasks when refreshTrigger changes (when events are added/deleted)
+  // Refresh subtasks when refreshTrigger changes
   useEffect(() => {
     if (refreshTrigger > 0) {
       fetchSubtasks(selectedEventId);
@@ -150,6 +255,56 @@ export default function EventArea() {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
+      {/* Deadline Notifications */}
+      <AnimatePresence>
+        {notifications.map((notification) => (
+          <motion.div
+            key={notification.id}
+            initial={{ opacity: 0, y: -100, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -50, scale: 0.95 }}
+            className="fixed top-4 right-4 z-50 bg-gradient-to-r from-red-500/10 to-orange-500/10 border border-red-500/30 rounded-lg p-4 backdrop-blur-sm shadow-xl max-w-md"
+          >
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h4 className="font-semibold text-red-300 mb-1">Deadline Missed!</h4>
+                <p className="text-sm text-zinc-300 mb-2">{notification.event.title}</p>
+                <p className="text-xs text-zinc-400 mb-3">
+                  Was due: {new Date(notification.event.deadline).toLocaleDateString()}
+                </p>
+                
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleExtendDeadline(notification.event._id)}
+                    disabled={isExtending === notification.event._id}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/40 rounded-md text-xs text-blue-300 transition-colors disabled:opacity-50"
+                  >
+                    <Calendar className="w-3 h-3" />
+                    {isExtending === notification.event._id ? "Extending..." : "Extend +24h"}
+                  </button>
+                  
+                  <button
+                    onClick={() => handleMarkComplete(notification.event._id)}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 rounded-md text-xs text-green-300 transition-colors"
+                  >
+                    <CheckCircle2 className="w-3 h-3" />
+                    Complete
+                  </button>
+                </div>
+              </div>
+              
+              <button
+                onClick={() => dismissNotification(notification.event._id)}
+                className="text-zinc-400 hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </motion.div>
+        ))}
+      </AnimatePresence>
+
       {/* Header Section */}
       <motion.div 
         className="mb-8"
@@ -161,6 +316,16 @@ export default function EventArea() {
           <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-zinc-300 bg-clip-text text-transparent">
             Tuesday, April 23
           </h1>
+          {notifications.length > 0 && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="flex items-center gap-1 px-2 py-1 bg-red-500/20 border border-red-500/30 rounded-full"
+            >
+              <AlertTriangle className="w-3 h-3 text-red-400" />
+              <span className="text-xs text-red-300">{notifications.length} overdue</span>
+            </motion.div>
+          )}
         </div>
         
         <div className="flex items-center gap-6 text-sm">
@@ -181,7 +346,7 @@ export default function EventArea() {
             ].map((stat) => (
               <motion.div
                 key={stat.name}
-                className={`flex items-center gap-2 px-2 py-1 rounded-md ${stat.bg}`}
+                className={`flex items-center gap-2 px-2 py-1 rounded-md`}
                 whileHover={{ scale: 1.05 }}
                 transition={{ type: "spring", stiffness: 400, damping: 25 }}
               >

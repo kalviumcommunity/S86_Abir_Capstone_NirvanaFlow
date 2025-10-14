@@ -11,6 +11,7 @@ export interface ISubtask extends Document {
   status: 'todo' | 'doing' | 'done';
   priority: 'low' | 'medium' | 'high';
   createdAt: Date;
+  completedAt: Date
 }
 
 
@@ -21,6 +22,7 @@ const SubtaskSchema: Schema = new Schema({
   status: { type: String, enum: ['todo', 'doing', 'done'], default: 'todo' },
   priority: { type: String, enum: ['low', 'medium', 'high'], default: 'medium' },
   createdAt: { type: Date, default: Date.now },
+  completedAt: {type:Date , default:null}
 });
 
 export default mongoose.models.Subtask || mongoose.model<ISubtask>('Subtask', SubtaskSchema);

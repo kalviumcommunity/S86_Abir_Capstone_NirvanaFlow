@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import Subtask from "@/models/Subtask";
+import Events from "@/models/Events";
 import connectDb from "@/lib/db";
 
+interface UpdateSubtaskBody {
+  status: string;
+  completedAt: Date | null;
+}
+
 export async function PUT(
- req: NextRequest, context: { params: { id: string } }
+  req: NextRequest, 
+  context: { params: { id: string } }
 ) {
   try {
-    
-    const { id } =  context.params;
+    const { id } = context.params;
 
     if (!id) {
       return NextResponse.json(
@@ -16,9 +22,8 @@ export async function PUT(
       );
     }
 
+    await connectDb(); // Connect before parsing body for better error handling
     const body = await req.json();
-    await connectDb();
-
     const { status } = body;
 
     if (status === undefined) {
@@ -28,9 +33,14 @@ export async function PUT(
       );
     }
 
+    const updateData: UpdateSubtaskBody = {
+      status,
+      completedAt: status === "done" ? new Date() : null,
+    };
+
     const updatedSubtask = await Subtask.findByIdAndUpdate(
       id,
-      { status },
+      updateData,
       { new: true }
     );
 
@@ -41,11 +51,30 @@ export async function PUT(
       );
     }
 
-    return NextResponse.json(updatedSubtask);
+    // Check if all subtasks for this event are done
+    const eventId = updatedSubtask.eventId;
+    const event_subtasks = await Subtask.find({ eventId });
+
+    
+    const allDone = event_subtasks.length > 0 && event_subtasks.every(t => t.status === "done");
+
+    // Update parent event completion status
+    await Events.findByIdAndUpdate(
+      eventId,
+      { completedAt: allDone ? new Date() : null }, // Fixed: new Date() not new Date
+      { new: true }
+    );
+
+    return NextResponse.json({
+      success: true,
+      subtask: updatedSubtask,
+      allSubtasksDone: allDone
+    });
+
   } catch (error) {
     console.error("Error updating the subtasks for this event:", error);
     return NextResponse.json(
-      { message: "Error updating the subtask" },
+      { message: "Error updating the subtask", error: error.message },
       { status: 500 }
     );
   }

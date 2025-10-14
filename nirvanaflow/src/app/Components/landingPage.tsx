@@ -1,26 +1,30 @@
 "use client"
+
 import { motion } from "framer-motion"
 import { Brain, Calendar, Mail, ArrowRight, CheckCircle2, Target } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import Navbar from "./navbar"
 
 export default function LandingPage({ onGetStarted }: { onGetStarted: () => void }) {
   return (
-    <div className="min-h-screen bg-zinc-950 text-white relative overflow-hidden">
+    <div className="min-h-screen bg-zinc-950 text-white relative  overflow-hidden bg-[radial-gradient(ellipse_55%_40%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]">
+      {/* Navbar */}
+      <Navbar onGetStarted={onGetStarted} />
+
       {/* Background light beams */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-gradient-radial from-blue-500/10 via-purple-500/5 to-transparent rounded-full blur-3xl" />
-        <div className="absolute top-1/3 right-0 w-[600px] h-[600px] bg-gradient-radial from-cyan-400/8 via-blue-500/4 to-transparent rounded-full blur-3xl" />
-        <div className="absolute bottom-1/3 left-0 w-[500px] h-[500px] bg-gradient-radial from-purple-500/8 via-pink-500/4 to-transparent rounded-full blur-3xl" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-gradient-radial from-blue-500 via-purple-500 to-transparent rounded-full blur-3xl" />
+        <div className="absolute top-1/3 right-0 w-[600px] h-[600px] bg-gradient-radial from-cyan-400 via-blue-500 to-transparent rounded-full blur-3xl" />
+        <div className="absolute bottom-1/3 left-0 w-[500px] h-[500px] bg-gradient-radial from-purple-500 via-pink-500 to-transparent rounded-full blur-3xl" />
       </div>
+
       {/* Hero Section */}
-      <section className="px-6 py-20 max-w-4xl mx-auto relative">
-        {/* Hero light beam */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-32 bg-gradient-to-b from-white/20 via-white/10 to-transparent" />
+      <section id="hero" className="px-6 py-32 max-w-4xl mx-auto relative ">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
           className="text-center relative z-10"
         >
           <h1 className="text-5xl md:text-6xl font-light mb-8 leading-tight">
@@ -28,12 +32,10 @@ export default function LandingPage({ onGetStarted }: { onGetStarted: () => void
             <br />
             <span className="font-normal">Let AI handle the rest.</span>
           </h1>
-
           <p className="text-xl text-zinc-400 mb-12 max-w-2xl mx-auto leading-relaxed">
             Transform overwhelming projects into organized workflows. AI breaks down your events, prioritizes tasks, and
             keeps you focused.
           </p>
-
           <Button
             onClick={onGetStarted}
             className="bg-white hover:bg-zinc-100 text-zinc-900 px-8 py-3 text-lg rounded-2xl transition-colors duration-200"
@@ -47,7 +49,7 @@ export default function LandingPage({ onGetStarted }: { onGetStarted: () => void
       {/* Problem Statement */}
       <section className="px-6 py-16 relative">
         {/* Section light beam */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-16 bg-gradient-to-b from-blue-400/30 via-blue-400/10 to-transparent" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-16 bg-gradient-to-b from-blue-400 via-blue-400/10 to-transparent" />
         <div className="max-w-4xl mx-auto relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -62,7 +64,6 @@ export default function LandingPage({ onGetStarted }: { onGetStarted: () => void
               of your work.
             </p>
           </motion.div>
-
           <div className="grid md:grid-cols-3 gap-6">
             {[
               {
@@ -100,9 +101,9 @@ export default function LandingPage({ onGetStarted }: { onGetStarted: () => void
       </section>
 
       {/* Solution */}
-      <section className="px-6 py-20 relative">
+      <section id="solution" className="px-6 py-20 relative">
         {/* Vertical light beam */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-20 bg-gradient-to-b from-purple-400/40 via-purple-400/10 to-transparent" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-20 bg-gradient-to-b from-purple-400 via-purple-400/10 to-transparent" />
         <div className="max-w-4xl mx-auto relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -116,7 +117,6 @@ export default function LandingPage({ onGetStarted }: { onGetStarted: () => void
               One intelligent system that understands your work and organizes it automatically.
             </p>
           </motion.div>
-
           <div className="space-y-8">
             {[
               {
@@ -178,9 +178,9 @@ export default function LandingPage({ onGetStarted }: { onGetStarted: () => void
       </section>
 
       {/* How It Works */}
-      <section className="px-6 py-16 relative">
+      <section id="how-it-works" className="px-6 py-16 relative">
         {/* Section divider light */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-12 bg-gradient-to-b from-cyan-400/30 via-cyan-400/10 to-transparent" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-12 bg-gradient-to-b from-cyan-400 via-cyan-400/10 to-transparent" />
         <div className="max-w-4xl mx-auto relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -191,7 +191,6 @@ export default function LandingPage({ onGetStarted }: { onGetStarted: () => void
           >
             <h2 className="text-3xl font-light mb-6">How It Works</h2>
           </motion.div>
-
           <div className="grid md:grid-cols-3 gap-6">
             {[
               {
@@ -238,7 +237,7 @@ export default function LandingPage({ onGetStarted }: { onGetStarted: () => void
       {/* Final CTA */}
       <section className="px-6 py-20 relative">
         {/* Prominent CTA light beam */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-24 bg-gradient-to-b from-white/30 via-white/10 to-transparent" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-24 bg-gradient-to-b from-white/60 via-white/10 to-transparent" />
         <div className="max-w-2xl mx-auto relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -253,7 +252,6 @@ export default function LandingPage({ onGetStarted }: { onGetStarted: () => void
               <div className="absolute bottom-0 right-0 w-40 h-40 bg-gradient-radial from-white/5 to-transparent rounded-full blur-2xl" />
               <CardContent className="p-0 text-center relative z-10">
                 <h2 className="text-3xl font-light mb-8 text-white">Ready to focus on what matters?</h2>
-
                 <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-10 text-sm text-zinc-400">
                   {["No setup required", "Works immediately", "Free to try"].map((benefit, index) => (
                     <div key={index} className="flex items-center gap-2">
@@ -262,7 +260,6 @@ export default function LandingPage({ onGetStarted }: { onGetStarted: () => void
                     </div>
                   ))}
                 </div>
-
                 <Button
                   onClick={onGetStarted}
                   size="lg"
