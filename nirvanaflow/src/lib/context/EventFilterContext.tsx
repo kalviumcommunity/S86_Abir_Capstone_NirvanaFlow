@@ -1,31 +1,44 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import axios from 'axios';
-import { toast } from 'sonner';
-import { IEvent } from '@/models/Events';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import api from "@/lib/api-config";
+import { AxiosError } from "axios";
+import { toast } from "sonner";
+import { IEvent } from "@/models/Events";
 
 interface EventFilterContextType {
   // Event selection
   selectedEventId: string | null;
   setSelectedEventId: (id: string | null) => void;
   selectedEventTitle: string;
-  
+
   // Events data
   events: IEvent[];
   isLoadingEvents: boolean;
-  
+
   // Actions
   fetchEvents: () => Promise<void>;
-  addEvent: (eventData: { title: string; description: string; deadline: string }) => Promise<void>;
+  addEvent: (eventData: {
+    title: string;
+    description: string;
+    deadline: string;
+  }) => Promise<void>;
   deleteEvent: (eventId: string) => Promise<void>;
-  
+
   // Refresh triggers for dependent components
   refreshTrigger: number;
   triggerRefresh: () => void;
 }
 
-const EventFilterContext = createContext<EventFilterContextType | undefined>(undefined);
+const EventFilterContext = createContext<EventFilterContextType | undefined>(
+  undefined
+);
 
 export function EventFilterProvider({ children }: { children: ReactNode }) {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -35,18 +48,20 @@ export function EventFilterProvider({ children }: { children: ReactNode }) {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const triggerRefresh = () => {
-    setRefreshTrigger(prev => prev + 1);
+    setRefreshTrigger((prev) => prev + 1);
   };
 
   const fetchEvents = async () => {
     setIsLoadingEvents(true);
     try {
-      const response = await axios.get('/api/events');
+      const response = await api.get("/api/events");
       setEvents(response.data);
-      
+
       // Update selected title if current event still exists
       if (selectedEventId) {
-        const currentEvent = response.data.find((e: IEvent) => e._id === selectedEventId);
+        const currentEvent = response.data.find(
+          (e: IEvent) => e._id === selectedEventId
+        );
         if (currentEvent) {
           setSelectedEventTitle(currentEvent.title);
         } else {
@@ -56,54 +71,58 @@ export function EventFilterProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch (error) {
-      console.error('Failed to fetch events:', error);
-      toast.error('Failed to load events');
+      console.error("Failed to fetch events:", error);
+      toast.error("Failed to load events");
     } finally {
       setIsLoadingEvents(false);
     }
   };
 
-  const addEvent = async (eventData: { title: string; description: string; deadline: string }) => {
+  const addEvent = async (eventData: {
+    title: string;
+    description: string;
+    deadline: string;
+  }) => {
     try {
-      const response = await axios.post("/api/events", {
+      const response = await api.post("/api/events", {
         title: eventData.title.trim(),
         description: eventData.description.trim(),
         deadline: eventData.deadline,
       });
-      
+
       // Add the new event to local state
       const newEvent = response.data;
-      setEvents(prev => [...prev, newEvent]);
-      
-      toast.success('Event created successfully');
+      setEvents((prev) => [...prev, newEvent]);
+
+      toast.success("Event created successfully");
       triggerRefresh(); // Notify dependent components
-      
+
       return response.data;
     } catch (error) {
       console.error("Error adding event", error);
-      toast.error('Failed to create event');
+      toast.error("Failed to create event");
       throw error;
     }
   };
 
   const deleteEvent = async (eventId: string) => {
     try {
-      await axios.delete(`/api/events/${eventId}`);
-      
+      await api.delete(`/api/events/${eventId}`);
+
       // Remove from local state
-      setEvents(prev => prev.filter(e => e._id !== eventId));
-      
+      setEvents((prev) => prev.filter((e) => e._id !== eventId));
+
       // If deleted event was selected, reset selection
       if (selectedEventId === eventId) {
         setSelectedEventId(null);
         setSelectedEventTitle("All Events");
       }
-      
+
       toast.success("Event deleted successfully");
       triggerRefresh(); // Notify dependent components
     } catch (error) {
       console.error("Failed to delete event:", error);
-      toast.error('Failed to delete event');
+      toast.error("Failed to delete event");
       throw error;
     }
   };
@@ -112,7 +131,7 @@ export function EventFilterProvider({ children }: { children: ReactNode }) {
   const handleSetSelectedEventId = (id: string | null) => {
     setSelectedEventId(id);
     if (id) {
-      const event = events.find(e => e._id === id);
+      const event = events.find((e) => e._id === id);
       setSelectedEventTitle(event?.title || "Unknown Event");
     } else {
       setSelectedEventTitle("All Events");
@@ -147,7 +166,9 @@ export function EventFilterProvider({ children }: { children: ReactNode }) {
 export function useEventFilter() {
   const context = useContext(EventFilterContext);
   if (context === undefined) {
-    throw new Error('useEventFilter must be used within an EventFilterProvider');
+    throw new Error(
+      "useEventFilter must be used within an EventFilterProvider"
+    );
   }
   return context;
 }

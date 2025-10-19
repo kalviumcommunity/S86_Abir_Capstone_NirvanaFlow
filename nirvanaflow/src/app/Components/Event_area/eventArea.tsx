@@ -1,10 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent } from "@dnd-kit/core";
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+} from "@dnd-kit/core";
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, CheckCircle2, Circle, PlayCircle, AlertTriangle, X, Calendar } from "lucide-react";
-import axios from "axios";
+import {
+  Clock,
+  CheckCircle2,
+  Circle,
+  PlayCircle,
+  AlertTriangle,
+  X,
+  Calendar,
+} from "lucide-react";
+import api from "@/lib/api-config";
+import { AxiosError } from "axios";
 
 import SingleBoard from "./Event_board/singleBoards";
 import TaskCard from "./Event_board/task";
@@ -28,7 +42,7 @@ interface DeadlineNotification {
 
 export default function EventArea() {
   const { selectedEventId, refreshTrigger } = useEventFilter();
-  
+
   const [boards, setBoards] = useState<Board[]>([
     { name: "Todo", tasks: [] },
     { name: "Doing", tasks: [] },
@@ -36,7 +50,9 @@ export default function EventArea() {
   ]);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [notifications, setNotifications] = useState<DeadlineNotification[]>([]);
+  const [notifications, setNotifications] = useState<DeadlineNotification[]>(
+    []
+  );
   const [isExtending, setIsExtending] = useState<string | null>(null);
 
   async function fetchSubtasks(id?: string) {
@@ -44,9 +60,9 @@ export default function EventArea() {
     try {
       let res;
       if (!id) {
-        res = await axios.get("/api/subtasks");
+        res = await api.get("/api/subtasks");
       } else {
-        res = await axios.get(`/api/subtasks/events/${id}`);
+        res = await api.get(`/api/subtasks/events/${id}`);
       }
 
       const subtasks = res.data;
@@ -100,24 +116,24 @@ export default function EventArea() {
 
     try {
       console.log("Updating subtask:", { taskId, newStatus }); // Debug log
-      const response = await axios.put(`/api/subtasks/${taskId}`, { status: newStatus });
+      const response = await api.put(`/api/subtasks/${taskId}`, {
+        status: newStatus,
+      });
       console.log("Update successful:", response.data);
     } catch (error) {
       console.error("Failed to update subtask:", error);
-      if (axios.isAxiosError(error)) {
+      if (error instanceof AxiosError) {
         console.error("Response data:", error.response?.data);
         console.error("Status code:", error.response?.status);
       }
       // Revert optimistic update on error
-      fetchSubtasks(selectedEventId);
+      fetchSubtasks(selectedEventId || undefined);
     }
   }
 
   function handleDragStart(event: DragStartEvent) {
     const taskId = event.active.id;
-    const found = boards
-      .flatMap((b) => b.tasks)
-      .find((t) => t._id === taskId);
+    const found = boards.flatMap((b) => b.tasks).find((t) => t._id === taskId);
     setActiveTask(found || null);
   }
 
@@ -137,15 +153,18 @@ export default function EventArea() {
     setIsExtending(eventId);
     try {
       // Calculate new deadline (24 hours from now)
-      const newDeadline = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-      
-      await axios.put(`/api/events/${eventId}/extend`, {
-        deadline: newDeadline
+      const newDeadline = new Date(
+        Date.now() + 24 * 60 * 60 * 1000
+      ).toISOString();
+
+      await api.put(`/api/events/${eventId}/extend`, {
+        deadline: newDeadline,
       });
 
       // Remove notification
-      setNotifications(prev => prev.filter(notif => notif.event._id !== eventId));
-      
+      setNotifications((prev) =>
+        prev.filter((notif) => notif.event._id !== eventId)
+      );
     } catch (error) {
       console.error("Failed to extend deadline:", error);
     } finally {
@@ -155,55 +174,62 @@ export default function EventArea() {
 
   const handleMarkComplete = async (eventId: string) => {
     try {
-      await axios.put(`/api/events/${eventId}`, {
-        completedAt: new Date()
+      await api.put(`/api/events/${eventId}`, {
+        completedAt: new Date(),
       });
 
       // Remove notification
-      setNotifications(prev => prev.filter(notif => notif.event._id !== eventId));
-      
+      setNotifications((prev) =>
+        prev.filter((notif) => notif.event._id !== eventId)
+      );
     } catch (error) {
       console.error("Failed to mark event complete:", error);
     }
   };
 
   const dismissNotification = (eventId: string) => {
-    setNotifications(prev => prev.filter(notif => notif.event._id !== eventId));
+    setNotifications((prev) =>
+      prev.filter((notif) => notif.event._id !== eventId)
+    );
   };
 
   // SSE Integration
   useEffect(() => {
     const evtSource = new EventSource("/api/sse");
-    
+
     evtSource.onmessage = (event) => {
       console.log("SSE raw event:", event);
     };
 
-    evtSource.addEventListener('deadline-missed', (event) => {
+    evtSource.addEventListener("deadline-missed", (event) => {
       const data = JSON.parse(event.data);
       console.log("Deadline missed:", data);
-      
+
       if (data.events && data.events.length > 0) {
-        const newNotifications = data.events.map((overdueEvent: OverdueEvent) => ({
-          id: `${overdueEvent._id}-${Date.now()}`,
-          event: overdueEvent,
-          timestamp: new Date().toISOString()
-        }));
-        
-        setNotifications(prev => {
+        const newNotifications = data.events.map(
+          (overdueEvent: OverdueEvent) => ({
+            id: `${overdueEvent._id}-${Date.now()}`,
+            event: overdueEvent,
+            timestamp: new Date().toISOString(),
+          })
+        );
+
+        setNotifications((prev) => {
           // Avoid duplicates
-          const existingIds = new Set(prev.map(n => n.event._id));
-          const uniqueNotifications = newNotifications.filter(n => !existingIds.has(n.event._id));
+          const existingIds = new Set(prev.map((n) => n.event._id));
+          const uniqueNotifications = newNotifications.filter(
+            (n: DeadlineNotification) => !existingIds.has(n.event._id)
+          );
           return [...prev, ...uniqueNotifications];
         });
       }
     });
 
-    evtSource.addEventListener('connected', (event) => {
+    evtSource.addEventListener("connected", (event) => {
       console.log("SSE connected:", event.data);
     });
 
-    evtSource.addEventListener('error', (event) => {
+    evtSource.addEventListener("error", (event) => {
       console.error("SSE error event:", event);
     });
 
@@ -218,13 +244,13 @@ export default function EventArea() {
 
   // Fetch subtasks when selectedEventId changes
   useEffect(() => {
-    fetchSubtasks(selectedEventId);
+    fetchSubtasks(selectedEventId || undefined);
   }, [selectedEventId]);
 
   // Refresh subtasks when refreshTrigger changes
   useEffect(() => {
     if (refreshTrigger > 0) {
-      fetchSubtasks(selectedEventId);
+      fetchSubtasks(selectedEventId || undefined);
     }
   }, [refreshTrigger, selectedEventId]);
 
@@ -233,7 +259,8 @@ export default function EventArea() {
   const doingCount = boards.find((b) => b.name === "Doing")?.tasks.length || 0;
   const doneCount = boards.find((b) => b.name === "Done")?.tasks.length || 0;
 
-  const completionRate = totalTasks > 0 ? Math.round((doneCount / totalTasks) * 100) : 0;
+  const completionRate =
+    totalTasks > 0 ? Math.round((doneCount / totalTasks) * 100) : 0;
 
   const getBoardIcon = (boardName: string) => {
     switch (boardName.toLowerCase()) {
@@ -249,7 +276,7 @@ export default function EventArea() {
   };
 
   return (
-    <motion.main 
+    <motion.main
       className="flex-1 p-6 bg-gradient-to-bl from-black via-zinc-900 to-black min-h-screen"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -268,12 +295,17 @@ export default function EventArea() {
             <div className="flex items-start gap-3">
               <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <h4 className="font-semibold text-red-300 mb-1">Deadline Missed!</h4>
-                <p className="text-sm text-zinc-300 mb-2">{notification.event.title}</p>
-                <p className="text-xs text-zinc-400 mb-3">
-                  Was due: {new Date(notification.event.deadline).toLocaleDateString()}
+                <h4 className="font-semibold text-red-300 mb-1">
+                  Deadline Missed!
+                </h4>
+                <p className="text-sm text-zinc-300 mb-2">
+                  {notification.event.title}
                 </p>
-                
+                <p className="text-xs text-zinc-400 mb-3">
+                  Was due:{" "}
+                  {new Date(notification.event.deadline).toLocaleDateString()}
+                </p>
+
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleExtendDeadline(notification.event._id)}
@@ -281,9 +313,11 @@ export default function EventArea() {
                     className="flex items-center gap-1 px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/40 rounded-md text-xs text-blue-300 transition-colors disabled:opacity-50"
                   >
                     <Calendar className="w-3 h-3" />
-                    {isExtending === notification.event._id ? "Extending..." : "Extend +24h"}
+                    {isExtending === notification.event._id
+                      ? "Extending..."
+                      : "Extend +24h"}
                   </button>
-                  
+
                   <button
                     onClick={() => handleMarkComplete(notification.event._id)}
                     className="flex items-center gap-1 px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 rounded-md text-xs text-green-300 transition-colors"
@@ -293,7 +327,7 @@ export default function EventArea() {
                   </button>
                 </div>
               </div>
-              
+
               <button
                 onClick={() => dismissNotification(notification.event._id)}
                 className="text-zinc-400 hover:text-white transition-colors"
@@ -306,7 +340,7 @@ export default function EventArea() {
       </AnimatePresence>
 
       {/* Header Section */}
-      <motion.div 
+      <motion.div
         className="mb-8"
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -323,13 +357,15 @@ export default function EventArea() {
               className="flex items-center gap-1 px-2 py-1 bg-red-500/20 border border-red-500/30 rounded-full"
             >
               <AlertTriangle className="w-3 h-3 text-red-400" />
-              <span className="text-xs text-red-300">{notifications.length} overdue</span>
+              <span className="text-xs text-red-300">
+                {notifications.length} overdue
+              </span>
             </motion.div>
           )}
         </div>
-        
+
         <div className="flex items-center gap-6 text-sm">
-          <motion.div 
+          <motion.div
             className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800/50 rounded-full border border-zinc-700/50"
             whileHover={{ scale: 1.02 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
@@ -337,7 +373,7 @@ export default function EventArea() {
             <Clock className="w-4 h-4 text-zinc-400" />
             <span className="text-zinc-300">Total: {totalTasks}</span>
           </motion.div>
-          
+
           <div className="flex items-center gap-4">
             {[
               { name: "Todo", count: todoCount, color: "text-zinc-500" },
@@ -351,16 +387,20 @@ export default function EventArea() {
                 transition={{ type: "spring", stiffness: 400, damping: 25 }}
               >
                 {getBoardIcon(stat.name)}
-                <span className={`${stat.color} font-medium`}>{stat.count}</span>
+                <span className={`${stat.color} font-medium`}>
+                  {stat.count}
+                </span>
               </motion.div>
             ))}
           </div>
 
-          <motion.div 
+          <motion.div
             className="ml-auto px-3 py-1.5 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-full border border-green-500/20"
             whileHover={{ scale: 1.02 }}
           >
-            <span className="text-green-400 font-medium">{completionRate}% Complete</span>
+            <span className="text-green-400 font-medium">
+              {completionRate}% Complete
+            </span>
           </motion.div>
         </div>
       </motion.div>
@@ -371,7 +411,7 @@ export default function EventArea() {
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
-        <motion.div 
+        <motion.div
           className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
