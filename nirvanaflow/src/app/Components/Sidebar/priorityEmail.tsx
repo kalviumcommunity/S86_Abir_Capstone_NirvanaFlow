@@ -4,7 +4,8 @@ import { Mail, AlertCircle, Loader2, RefreshCw } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import axios from "axios";
+import { AxiosError } from "axios";
+import api from "@/lib/api-config";
 
 interface PriorityEmailData {
   id: string;
@@ -39,7 +40,7 @@ export function PriorityEmail() {
       }
       setError(null);
 
-      const response = await axios.get<EmailApiResponse>("/api/sync/mail");
+      const response = await api.get<EmailApiResponse>("/api/sync/mail");
       const data = response.data;
 
       setEmailData(data.mostImportantEmail);
@@ -47,7 +48,7 @@ export function PriorityEmail() {
     } catch (err) {
       let errorMessage = "Failed to fetch priority email";
 
-      if (axios.isAxiosError(err)) {
+      if (err instanceof AxiosError) {
         if (err.response?.status === 401) {
           errorMessage = "Authentication required";
         } else if (err.response?.status === 403) {
@@ -85,8 +86,6 @@ export function PriorityEmail() {
     return from.length > 25 ? from.substring(0, 25) + "…" : from;
   };
 
-  
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -110,7 +109,9 @@ export function PriorityEmail() {
           className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all duration-200 disabled:opacity-40 hover:bg-white/5 px-2 py-1 rounded-lg active:scale-95"
         >
           <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} />
-          <span className="font-medium">{refreshing ? "Syncing" : "Refresh"}</span>
+          <span className="font-medium">
+            {refreshing ? "Syncing" : "Refresh"}
+          </span>
         </button>
       </div>
 
@@ -133,9 +134,7 @@ export function PriorityEmail() {
               No priority emails
             </div>
           ) : (
-            <div 
-              className="relative pl-3  rounded-sm"
-            >
+            <div className="relative pl-3  rounded-sm">
               <h4 className="text-white text-sm font-semibold leading-tight line-clamp-2">
                 {emailData.subject}
               </h4>

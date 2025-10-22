@@ -1,10 +1,17 @@
-'use client';
+"use client";
 
-import { CalendarDays, Clock, Loader2, RefreshCw, AlertCircle } from "lucide-react";
+import {
+  CalendarDays,
+  Clock,
+  Loader2,
+  RefreshCw,
+  AlertCircle,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from "@/lib/api-config";
+import { AxiosError } from "axios";
 
 interface CalendarEvent {
   id: string;
@@ -24,7 +31,7 @@ export function UpcomingEvents() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [dateInfo, setDateInfo] = useState<string>('');
+  const [dateInfo, setDateInfo] = useState<string>("");
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchEvents = async (isRefresh = false) => {
@@ -36,37 +43,39 @@ export function UpcomingEvents() {
       }
       setError(null);
 
-      const response = await axios.get<CalendarApiResponse>('/api/sync/calendar', {
-        timeout: 10000,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await api.get<CalendarApiResponse>(
+        "/api/sync/calendar",
+        {
+          timeout: 10000,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       const data = response.data;
-      
+
       setEvents(data.events);
       setDateInfo(data.date);
-      
     } catch (err) {
-      let errorMessage = 'Failed to fetch calendar events';
-      
-      if (axios.isAxiosError(err)) {
+      let errorMessage = "Failed to fetch calendar events";
+
+      if (err instanceof AxiosError)  {
         if (err.response?.status === 401) {
-          errorMessage = 'Authentication required';
+          errorMessage = "Authentication required";
         } else if (err.response?.status === 403) {
-          errorMessage = 'Insufficient calendar permissions';
+          errorMessage = "Insufficient calendar permissions";
         } else if (err.response?.status === 429) {
-          errorMessage = 'Rate limit exceeded';
+          errorMessage = "Rate limit exceeded";
         } else if (err.response?.data?.error) {
           errorMessage = err.response.data.error;
-        } else if (err.code === 'ECONNABORTED') {
-          errorMessage = 'Request timeout';
+        } else if (err.code === "ECONNABORTED") {
+          errorMessage = "Request timeout";
         }
       }
-      
+
       setError(errorMessage);
-      console.error('Calendar events fetch error:', err);
+      console.error("Calendar events fetch error:", err);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -83,10 +92,10 @@ export function UpcomingEvents() {
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
-      minute: '2-digit',
-      hour12: true 
+    return date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
     });
   };
 
@@ -95,7 +104,7 @@ export function UpcomingEvents() {
     const endDate = new Date(end);
     const durationMs = endDate.getTime() - startDate.getTime();
     const durationMinutes = Math.floor(durationMs / (1000 * 60));
-    
+
     if (durationMinutes < 60) {
       return `${durationMinutes}min`;
     }
@@ -109,13 +118,13 @@ export function UpcomingEvents() {
     const now = new Date();
     const timeDiff = eventStart.getTime() - now.getTime();
     const minutesDiff = timeDiff / (1000 * 60);
-    
-    return minutesDiff > 0 && minutesDiff <= 30; 
+
+    return minutesDiff > 0 && minutesDiff <= 30;
   };
 
   const getNextEvent = () => {
     const now = new Date();
-    return events.find(event => new Date(event.start) > now);
+    return events.find((event) => new Date(event.start) > now);
   };
 
   const nextEvent = getNextEvent();
@@ -130,7 +139,9 @@ export function UpcomingEvents() {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <CalendarDays size={16} className="text-zinc-400" />
-          <span className="text-sm font-medium text-white">Upcoming Events</span>
+          <span className="text-sm font-medium text-white">
+            Upcoming Events
+          </span>
           {events.length > 0 && (
             <span className="text-xs text-zinc-500 bg-zinc-800/60 px-2 py-0.5 rounded-full">
               {events.length}
@@ -142,8 +153,10 @@ export function UpcomingEvents() {
           disabled={refreshing}
           className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all duration-200 disabled:opacity-40 hover:bg-white/5 px-2 py-1 rounded-lg active:scale-95"
         >
-          <RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />
-          <span className="font-medium">{refreshing ? 'Syncing' : 'Refresh'}</span>
+          <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} />
+          <span className="font-medium">
+            {refreshing ? "Syncing" : "Refresh"}
+          </span>
         </button>
       </div>
 

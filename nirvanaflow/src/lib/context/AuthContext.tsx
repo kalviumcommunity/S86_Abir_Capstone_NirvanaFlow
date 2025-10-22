@@ -10,7 +10,7 @@ import {
 } from "firebase/auth";
 import { createContext, useContext, useEffect, useState } from "react";
 import { auth } from "../firebase";
-import axios from "axios";
+import api from "@/lib/api-config";
 
 type AuthContextType = {
   user: User | null;
@@ -61,9 +61,8 @@ export default function AuthContextProvider({
     try {
       const result = await signInWithPopup(auth, new GoogleAuthProvider());
       const signedInUser = result.user;
-      
 
-      await axios.post("/api/auth", {
+      await api.post("/api/auth", {
         uid: signedInUser.uid,
         name: signedInUser.displayName,
         email: signedInUser.email,
@@ -92,9 +91,7 @@ export default function AuthContextProvider({
     setLoading(false);
   };
 
-  
   return (
-    
     <AuthContext.Provider
       value={{ user, loading, error, handleSignIn, handleLogOut }}
     >

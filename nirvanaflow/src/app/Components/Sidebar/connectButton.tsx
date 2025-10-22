@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import axios from "axios";
+import api from "@/lib/api-config";
 import { UpcomingEvents } from "./upcomingEvents";
 import { PriorityEmail } from "./priorityEmail";
 
@@ -14,7 +14,7 @@ export default function GoogleConnect() {
   useEffect(() => {
     const checkStatus = async () => {
       try {
-        const res = await axios.get("/api/auth/google/status");
+        const res = await api.get("/api/auth/google/status");
         setConnected(res.data.connected);
       } catch {
         setConnected(false);
@@ -27,7 +27,7 @@ export default function GoogleConnect() {
   const handleConnect = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("/api/auth/google");
+      const res = await api.get("/api/auth/google");
       window.location.href = res.data.url;
     } catch (err) {
       console.error("OAuth error:", err);
@@ -55,7 +55,7 @@ export default function GoogleConnect() {
                 Sync your Gmail and Calendar
               </p>
             </div>
-            
+
             <Button
               onClick={handleConnect}
               disabled={loading}

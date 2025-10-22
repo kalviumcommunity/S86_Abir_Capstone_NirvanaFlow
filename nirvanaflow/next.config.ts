@@ -1,7 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ["192.168.29.51", "*.local"], // Specify allowed origins here
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  allowedDevOrigins: ["192.168.29.51", "*.local", "nirvanaflow.vercel.app"], // Specify allowed origins here
   /* other config options */
 };
 

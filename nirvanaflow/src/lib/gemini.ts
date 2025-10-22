@@ -1,10 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const genAI = new GoogleGenerativeAI(process.env.GenerativeAi_ApiKey!);
-
 export async function generateSubtasks(title: string, description: string) {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
   const prompt = `
 You are a helpful and intelligent task breakdown assistant.
 
@@ -52,16 +46,57 @@ Task: ${title}
 Description: ${description}
 `;
 
-
-  const reasult = await model.generateContent(prompt);
-  const text = reasult.response.text();
+  if (!process.env.GROQ_API_KEY) {
+    console.error("GROQ_API_KEY is not set in environment variables.");
+    return [];
+  }
 
   try {
-    const cleanedText = text.replace(/```json|```/g, "").trim();
-    const Subtasks = JSON.parse(cleanedText);
-    return Subtasks;
-  } catch (error) {
-    console.log("error parsing json", error);
-    throw new Error("Failed to get the gemini response");
+    const response = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [{ role: "user", content: prompt }],
+          max_tokens: 800,
+          temperature: 0.3,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error("Groq API error response:", errorBody);
+      throw new Error(
+        `Groq API error: ${response.status} ${response.statusText} - ${errorBody}`
+      );
+    }
+
+    const completion = await response.json();
+    const content = completion.choices?.[0]?.message?.content;
+    if (!content) return [];
+
+    const cleaned = content.replace(/```json|```/g, "").trim();
+    try {
+      const parsed = JSON.parse(cleaned);
+      if (Array.isArray(parsed)) return parsed;
+      return [];
+    } catch (err) {
+      console.log(
+        "groq: failed to parse JSON from model response",
+        err,
+        "raw:",
+        cleaned
+      );
+      return [];
+    }
+  } catch (err) {
+    console.error("groq chat completion error:", err);
+    return [];
   }
 }
